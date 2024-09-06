@@ -11,6 +11,7 @@ from typing import Any, List
 
 import weave
 import instructor
+import openai
 
 from pydantic import BaseModel, Field
 from tree_sitter_languages import get_language, get_parser
@@ -18,14 +19,11 @@ from tree_sitter_languages import get_language, get_parser
 
 BASE_URL = os.getenv("BASE_URL", None)
 MAX_TOKENS = os.getenv("MAX_TOKENS", 4096)
-FAST_LLM = os.getenv("FAST_LLM", "mistral/open-mistral-nemo-2407")
-STRONG_LLM = os.getenv("STRONG_LLM", "mistral/mistral-large-latest")
+FAST_LLM = os.getenv("FAST_LLM", "open-mistral-nemo-2407")
+STRONG_LLM = os.getenv("STRONG_LLM", "mistral-large-latest")
 
-os.environ["OPENAI_API_KEY"] = "dummy_key" # so that litellm will work
-
-from litellm import acompletion
-async_client = instructor.from_litellm(acompletion, mode=instructor.Mode.JSON)
-
+oai_client = openai.AsyncOpenAI(base_url=BASE_URL, api_key="dummy_key")
+async_client = instructor.from_openai(oai_client)
 
 language = get_language("python")
 tree_parser = get_parser("python")
@@ -141,7 +139,7 @@ def process_code_string(code_in_str):
 def check_correctness(
     program: str, input_data: str, expected_output: str, timeout: float
 ) -> str:
-    program = process_code_string(program)
+    # program = process_code_string(program)
     q = multiprocessing.Queue()
     process = multiprocessing.Process(
         target=exec_program, args=(q, program, input_data, expected_output, timeout)
@@ -173,7 +171,6 @@ async def format_response(text: str, model: Any) -> Any:
         response_model=model,
         max_retries=2,
         max_tokens=MAX_TOKENS,
-        base_url=BASE_URL,
     )
     return formatted_response
 
