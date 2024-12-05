@@ -159,7 +159,7 @@ def check_correctness(
 
 
 @weave.op
-async def format_response(text: str, model: Any) -> Any:
+async def format_response(text: str, model: Any, temperature: float = 0.7) -> Any:
     formatted_response = await async_client.chat.completions.create(
         model=FAST_LLM,
         # Instructor adds a system message by default about how to format the response given the response model.
@@ -172,6 +172,7 @@ async def format_response(text: str, model: Any) -> Any:
         response_model=model,
         max_retries=2,
         max_tokens=MAX_TOKENS,
+        temperature=temperature,
     )
     return formatted_response
 
